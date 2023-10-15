@@ -1,0 +1,35 @@
+# static configuration
+api:
+  dashboard: true
+
+entryPoints:
+  http:
+    address: ":80"
+  https:
+    address: ":443"
+  mattermost-calls:
+    address: ":9443/udp"
+  metrics:
+    address: ":8082"
+
+metrics:
+  prometheus:
+    entryPoint: metrics
+    addServicesLabels: true
+    addRoutersLabels: true
+    addEntryPointsLabels: true
+
+providers:
+  docker:
+    network: traefik_network
+  file:
+    directory: /etc/traefik
+    watch: true
+
+certificatesResolvers:
+  letsencrypt:
+    acme:
+      email: webmaster@tristanhoffmann.de
+      storage: /letsencrypt/acme.json
+      httpChallenge: 
+        entryPoint: http
