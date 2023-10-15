@@ -1,0 +1,49 @@
+version: "2.2"
+
+services:
+  traefik:
+    image: traefik:v2.10
+    container_name: traefik
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    volumes:
+      - /data/traefik/traefik-config/traefik.yml:/etc/traefik/traefik.yml:ro
+      - /data/traefik/traefik-config/tls.yml:/etc/traefik/tls.yml:ro
+      - /data/traefik/letsencrypt:/letsencrypt 
+      - /etc/localtime:/etc/localtime:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    ports:
+      - 80:80
+      - 443:443
+    networks:
+      network:
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.traefik.entrypoints=http"
+      - "traefik.http.routers.traefik.rule=PathPrefix(`/`)"
+      - "traefik.http.middlewares.traefik-auth.basicauth.users=tristan:XXX"
+      - "traefik.http.middlewares.traefik-https-redirect.redirectscheme.scheme=https"
+      - "traefik.http.routers.traefik.middlewares=traefik-https-redirect"
+      - "traefik.http.routers.traefik-secure.entrypoints=https"
+      - "traefik.http.routers.traefik-secure.rule=Host(`traefik.tristanhoffmann.de`)"
+      - "traefik.http.routers.traefik-secure.tls=true"
+      - "traefik.http.routers.traefik-secure.tls.options=default"
+      - "traefik.http.routers.traefik-secure.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.traefik-secure.service=api@internal"
+      - "traefik.http.routers.traefik-secure.middlewares=traefik-auth"
+      - "traefik.http.routers.traefik-local.entrypoints=https"
+      - "traefik.http.routers.traefik-local.service=api@internal"
+      - "traefik.http.routers.traefik-local.rule=Host(`debian`)"
+      - "traefik.http.routers.traefik-local.tls=true"
+      - "traefik.http.routers.traefik-local.middlewares=traefik-auth"
+
+networks:
+  network:
+    enable_ipv6: true
+    ipam:
+      config:
+        - subnet: 192.168.32.0/24
+          gateway: 192.168.32.1
+        - subnet: 2001:3984:3989::/64
+          gateway: 2001:3984:3989::1
